@@ -1,0 +1,1 @@
+# genshininfarct.github.io
