@@ -1109,6 +1109,7 @@
       view: "gallery",
       dateStart: null,
       dateEnd: null,
+      fullPeriod: false,
       calendarMonth: null,
       selectingRangeEnd: false,
       addingFootnote: false,
@@ -1215,6 +1216,7 @@
     }
 
     function resetDateSelection() {
+      state.fullPeriod = false;
       state.dateStart = null;
       state.dateEnd = null;
       state.calendarMonth = null;
@@ -1271,12 +1273,20 @@
       const times = entries.map(entry => entry.time);
       const min = isoFromDate(new Date(Math.min(...times)));
       const max = isoFromDate(new Date(Math.max(...times)));
-      let start = state.dateStart || min;
+      let start = state.dateStart || (state.fullPeriod ? min : threeMonthStart(max));
       let end = state.dateEnd || max;
       start = start < min ? min : (start > max ? max : start);
       end = end < min ? min : (end > max ? max : end);
       if (start > end) [start, end] = [end, start];
       return { entries, min, max, start, end };
+    }
+
+    function threeMonthStart(lastDate) {
+      const endExclusive = addUtcDays(dateFromIso(lastDate), 1);
+      const year = endExclusive.getUTCFullYear();
+      const month = endExclusive.getUTCMonth() - 3;
+      const lastDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+      return isoFromDate(new Date(Date.UTC(year, month, Math.min(endExclusive.getUTCDate(), lastDay))));
     }
 
     function selectedPeriods(periods) {
@@ -2787,6 +2797,7 @@
       if (button) applyQuickDateRange(Number(button.dataset.days));
     });
     el.allDateRange.addEventListener("click", () => {
+      state.fullPeriod = true;
       state.dateStart = null;
       state.dateEnd = null;
       state.selectingRangeEnd = false;
